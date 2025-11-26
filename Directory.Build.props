@@ -1,0 +1,7 @@
+<Project>
+  <ItemGroup>
+    <!-- Microsoft.AspNetCore.Http.Features 6.0.36 mevcut değil, 5.0.17'ye zorla -->
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
+  </ItemGroup>
+</Project>
+
