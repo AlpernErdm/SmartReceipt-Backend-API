@@ -6,11 +6,12 @@ AI destekli fiş okuma ve finans takip sistemi - Backend API
 
 - **.NET 9.0** - Modern C# framework
 - **ASP.NET Core Web API** - RESTful API
+- **JWT Authentication** - Bearer token ile kimlik doğrulama
 - **Entity Framework Core** - ORM
 - **PostgreSQL** - Veritabanı
 - **MediatR** - CQRS pattern
 - **FluentValidation** - Validasyon
-- **Mapster** - Object mapping
+- **BCrypt.Net** - Password hashing
 - **Google Gemini AI** - Fiş görsel analizi
 
 ## 📁 Proje Yapısı (Clean Architecture)
@@ -75,15 +76,25 @@ Swagger UI: `https://localhost:5001`
 
 ## 📡 API Endpoints
 
-### Receipts
+### Authentication (🔓 Public)
 
-- `GET /api/receipts` - Tüm fişleri listele (filtreleme ve sayfalama ile)
-- `GET /api/receipts/{id}` - ID'ye göre fiş detayı
-- `POST /api/receipts/scan` - Fiş görselini AI ile tara ve kaydet
-- `POST /api/receipts` - Manuel fiş oluştur
+- `POST /api/Auth/register` - Yeni kullanıcı kaydı
+- `POST /api/Auth/login` - Kullanıcı girişi (JWT token döner)
+- `POST /api/Auth/refresh-token` - Access token yenileme
+- `GET /api/Auth/me` 🔒 - Mevcut kullanıcı bilgisi
+- `POST /api/Auth/logout` 🔒 - Kullanıcı çıkışı
 
-### Health Check
+### Receipts (🔒 Authorization Required)
+
+- `GET /api/Receipts` - Tüm fişleri listele (filtreleme ve sayfalama ile)
+- `GET /api/Receipts/{id}` - ID'ye göre fiş detayı
+- `POST /api/Receipts/scan` - Fiş görselini AI ile tara ve kaydet
+- `POST /api/Receipts` - Manuel fiş oluştur
+
+### Health Check (🔓 Public)
 - `GET /health` - Sistem sağlık kontrolü
+
+**Not:** 🔒 işaretli endpoint'ler için `Authorization: Bearer {token}` header'ı gereklidir.
 
 ## 🏗️ Mimari Prensipler
 
@@ -92,6 +103,8 @@ Swagger UI: `https://localhost:5001`
 - **Repository Pattern** - Veri erişim soyutlaması
 - **Dependency Injection** - Gevşek bağlı bileşenler
 - **Validation Pipeline** - FluentValidation ile otomatik validasyon
+- **JWT Authentication** - Token-based kimlik doğrulama
+- **Authorization** - Role-based ve claim-based yetkilendirme
 
 ## 🔧 Geliştirme
 
