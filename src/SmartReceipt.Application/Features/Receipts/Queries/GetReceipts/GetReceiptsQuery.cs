@@ -5,6 +5,8 @@ namespace SmartReceipt.Application.Features.Receipts.Queries.GetReceipts;
 
 public record GetReceiptsQuery : IRequest<List<ReceiptDto>>
 {
+    public Guid UserId { get; init; }
+    
     public DateTime? FromDate { get; init; }
     
     public DateTime? ToDate { get; init; }

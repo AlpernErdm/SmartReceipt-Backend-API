@@ -1,3 +1,6 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SmartReceipt.API.Middleware;
 using SmartReceipt.Application;
@@ -8,6 +11,59 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplicationServices();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// JWT Authentication yapılandırması
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret key is not configured");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // Development için
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Audience"],
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+    
+    // Debug logging için events ekle
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>()
+                .LogError("Authentication failed: {Error}", context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>()
+                .LogInformation("Token validated for user: {UserId}", 
+                    context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>()
+                .LogWarning("Authentication challenge: {Error}", context.Error);
+            return Task.CompletedTask;
+        }
+    };
+});
 
 builder.Services.AddControllers();
 
@@ -23,6 +79,32 @@ builder.Services.AddSwaggerGen(options =>
         {
             Name = "SmartReceipt Team",
             Email = "info@smartreceipt.com"
+        }
+    });
+
+    // JWT Authentication için Swagger yapılandırması
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
         }
     });
 
@@ -64,6 +146,9 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
+// Authentication middleware'i Authorization'dan önce ve Routing'den sonra ekleyin
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

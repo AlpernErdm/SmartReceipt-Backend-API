@@ -19,6 +19,7 @@ public class Receipt : BaseEntity
     public bool IsProcessed { get; set; }
     
     public Guid? UserId { get; set; }
+    public User? User { get; set; }
     
     public ICollection<ReceiptItem> Items { get; set; } = new List<ReceiptItem>();
 }

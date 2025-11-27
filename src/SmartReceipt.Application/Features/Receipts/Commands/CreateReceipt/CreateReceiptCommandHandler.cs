@@ -35,6 +35,7 @@ public class CreateReceiptCommandHandler : IRequestHandler<CreateReceiptCommand,
             receipt = new Receipt
             {
                 Id = Guid.NewGuid(),
+                UserId = request.UserId,
                 StoreName = scanResult.StoreName,
                 ReceiptDate = scanResult.ReceiptDate,
                 TotalAmount = scanResult.TotalAmount,
@@ -59,6 +60,7 @@ public class CreateReceiptCommandHandler : IRequestHandler<CreateReceiptCommand,
             receipt = new Receipt
             {
                 Id = Guid.NewGuid(),
+                UserId = request.UserId,
                 StoreName = request.ManualData.StoreName,
                 ReceiptDate = request.ManualData.ReceiptDate,
                 TotalAmount = request.ManualData.TotalAmount,

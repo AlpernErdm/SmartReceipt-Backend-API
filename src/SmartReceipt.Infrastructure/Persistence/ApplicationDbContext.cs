@@ -15,6 +15,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Receipt> Receipts => Set<Receipt>();
     
     public DbSet<ReceiptItem> ReceiptItems => Set<ReceiptItem>();
+    
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

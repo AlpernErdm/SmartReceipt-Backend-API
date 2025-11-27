@@ -19,6 +19,7 @@ public class GetReceiptsQueryHandler : IRequestHandler<GetReceiptsQuery, List<Re
     {
         var query = _context.Receipts
             .Include(r => r.Items)
+            .Where(r => r.UserId == request.UserId)
             .AsQueryable();
 
         if (request.FromDate.HasValue)

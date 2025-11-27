@@ -34,8 +34,14 @@ public static class DependencyInjection
 
         services.Configure<OpenAiOptions>(
             configuration.GetSection(OpenAiOptions.SectionName));
+        
+        services.Configure<JwtSettings>(
+            configuration.GetSection("JwtSettings"));
 
         services.AddHttpClient<IAiReceiptScannerService, GeminiReceiptScannerService>();
+        
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
