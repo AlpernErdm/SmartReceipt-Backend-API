@@ -21,9 +21,6 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Kullanıcı kaydı oluşturur
-    /// </summary>
     [HttpPost("register")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -47,9 +44,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Kullanıcı girişi yapar
-    /// </summary>
     [HttpPost("login")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -73,9 +67,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Refresh token ile yeni access token alır
-    /// </summary>
     [HttpPost("refresh-token")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -99,9 +90,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Mevcut kullanıcının bilgilerini getirir
-    /// </summary>
     [Authorize]
     [HttpGet("me")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -133,9 +121,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Kullanıcının çıkış yapmasını sağlar (refresh token iptal)
-    /// </summary>
     [Authorize]
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status200OK)]

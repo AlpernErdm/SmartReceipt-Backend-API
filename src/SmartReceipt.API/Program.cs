@@ -1,10 +1,13 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SmartReceipt.API.Middleware;
 using SmartReceipt.Application;
+using SmartReceipt.Application.Common.Interfaces;
 using SmartReceipt.Infrastructure;
+using SmartReceipt.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +15,6 @@ builder.Services.AddApplicationServices();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// JWT Authentication yapılandırması
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret key is not configured");
 
@@ -37,7 +39,6 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
     
-    // Debug logging için events ekle
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
@@ -82,7 +83,6 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // JWT Authentication için Swagger yapılandırması
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -144,9 +144,10 @@ app.UseExceptionHandling();
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseCors("AllowAll");
 
-// Authentication middleware'i Authorization'dan önce ve Routing'den sonra ekleyin
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -154,6 +155,21 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHealthChecks("/health");
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<IApplicationDbContext>();
+        await context.SeedSubscriptionPlansAsync();
+        app.Logger.LogInformation("Seed data başarıyla yüklendi.");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Seed data yüklenirken bir hata oluştu.");
+    }
+}
 
 app.Logger.LogInformation("SmartReceipt API başlatılıyor...");
 app.Logger.LogInformation("Swagger UI: {Url}", app.Environment.IsDevelopment() ? "https://localhost:5001" : "Disabled");

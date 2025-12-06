@@ -17,6 +17,22 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ReceiptItem> ReceiptItems => Set<ReceiptItem>();
     
     public DbSet<User> Users => Set<User>();
+    
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    
+    public DbSet<UsageTracking> UsageTrackings => Set<UsageTracking>();
+    
+    public DbSet<Payment> Payments => Set<Payment>();
+    
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    
+    public DbSet<Refund> Refunds => Set<Refund>();
+    
+    public DbSet<Budget> Budgets => Set<Budget>();
+    
+    public DbSet<ReceiptAnalysis> ReceiptAnalyses => Set<ReceiptAnalysis>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

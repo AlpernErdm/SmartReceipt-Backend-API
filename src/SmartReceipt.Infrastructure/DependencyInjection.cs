@@ -42,6 +42,23 @@ public static class DependencyInjection
         
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IUsageLimitService, UsageLimitService>();
+        
+        services.Configure<PaymentOptions>(
+            configuration.GetSection(PaymentOptions.SectionName));
+        services.AddScoped<IPaymentService, IyzicoPaymentService>();
+        
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
+        
+        services.AddScoped<IReportService, ReportService>();
+        
+        services.AddScoped<IWebhookService, WebhookService>();
+        
+        services.AddScoped<ICurrencyService, CurrencyService>();
+        
+        services.AddScoped<IMlService, MlService>();
+        
+        services.AddScoped<IStorageService, StorageService>();
 
         return services;
     }

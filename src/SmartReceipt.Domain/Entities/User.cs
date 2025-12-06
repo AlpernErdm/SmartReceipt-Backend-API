@@ -18,6 +18,8 @@ public class User : BaseEntity
     
     public bool IsActive { get; set; } = true;
     
-    // Navigation property
+    // Navigation properties
     public ICollection<Receipt> Receipts { get; set; } = new List<Receipt>();
+    public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+    public ICollection<UsageTracking> UsageTrackings { get; set; } = new List<UsageTracking>();
 }

@@ -10,17 +10,30 @@ public class CreateReceiptCommandHandler : IRequestHandler<CreateReceiptCommand,
 {
     private readonly IApplicationDbContext _context;
     private readonly IAiReceiptScannerService _aiScannerService;
+    private readonly IUsageLimitService _usageLimitService;
 
     public CreateReceiptCommandHandler(
         IApplicationDbContext context,
-        IAiReceiptScannerService aiScannerService)
+        IAiReceiptScannerService aiScannerService,
+        IUsageLimitService usageLimitService)
     {
         _context = context;
         _aiScannerService = aiScannerService;
+        _usageLimitService = usageLimitService;
     }
 
     public async Task<ReceiptDto> Handle(CreateReceiptCommand request, CancellationToken cancellationToken)
     {
+        if (request.UseAiProcessing && request.ImageFile != null)
+        {
+            var canScan = await _usageLimitService.CanUserScanReceiptAsync(request.UserId, cancellationToken);
+            if (!canScan)
+            {
+                var remaining = await _usageLimitService.GetRemainingScansAsync(request.UserId, cancellationToken);
+                throw new Exception($"Aylık tarama limitinize ulaştınız. Kalan tarama hakkı: {remaining}. Lütfen planınızı yükseltin.");
+            }
+        }
+
         Receipt receipt;
 
         if (request.UseAiProcessing && request.ImageFile != null)
@@ -86,6 +99,11 @@ public class CreateReceiptCommandHandler : IRequestHandler<CreateReceiptCommand,
 
         _context.Receipts.Add(receipt);
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (request.UseAiProcessing && request.ImageFile != null)
+        {
+            await _usageLimitService.IncrementScanCountAsync(request.UserId, cancellationToken);
+        }
 
         return receipt.Adapt<ReceiptDto>();
     }
