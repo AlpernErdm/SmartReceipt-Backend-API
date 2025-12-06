@@ -150,9 +150,7 @@ public class AuthController : ControllerBase
             {
                 return Unauthorized(new { message = "Geçersiz token" });
             }
-
-            // Logout işlemi için ayrı bir command oluşturabilir
-            // veya basitçe refresh token'ı null yapabilirsiniz
+            
             _logger.LogInformation("Kullanıcı çıkış yaptı: {UserId}", userIdClaim);
             
             return Ok(new { message = "Başarıyla çıkış yapıldı" });
@@ -164,4 +162,5 @@ public class AuthController : ControllerBase
         }
     }
 }
+
 

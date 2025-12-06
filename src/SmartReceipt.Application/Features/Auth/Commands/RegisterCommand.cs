@@ -90,3 +90,4 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
     }
 }
 
+
