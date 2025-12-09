@@ -1,138 +1,105 @@
 # SmartReceipt Backend API
 
-AI destekli fiş okuma ve finans takip sistemi - Backend API
+AI destekli fiş okuma, abonelik ve ödeme yönetimi platformu - Backend API
 
 ## 🚀 Teknolojiler
+- **.NET 9.0**, **ASP.NET Core Web API**
+- **JWT Authentication**, **FluentValidation**, **MediatR (CQRS)**
+- **Entity Framework Core**, **PostgreSQL**
+- **Google Gemini AI** (fiş görsel analizi)
+- **Iyzipay SDK** (iyzico ödemeleri, 3D secure/token ile)
+- **Mapster** (mapping), **BCrypt.Net** (hashing)
 
-- **.NET 9.0** - Modern C# framework
-- **ASP.NET Core Web API** - RESTful API
-- **JWT Authentication** - Bearer token ile kimlik doğrulama
-- **Entity Framework Core** - ORM
-- **PostgreSQL** - Veritabanı
-- **MediatR** - CQRS pattern
-- **FluentValidation** - Validasyon
-- **BCrypt.Net** - Password hashing
-- **Google Gemini AI** - Fiş görsel analizi
+## ⭐ Öne Çıkan Özellikler
+- Abonelik planları, kullanım kotaları, iptal/yükseltme
+- iyzico ödeme entegrasyonu (token/3DS), ödeme geçmişi, iade
+- Gelişmiş analitik: kategori, trend, mağaza, vergi, karşılaştırma
+- Raporlama: PDF/Excel/CSV (basit çıktı), bütçe takibi
+- Premium: çoklu para birimi, ML kategori önerisi, tekrar/fraud tespiti
+- Webhook desteği (ödeme ve abonelik olayları)
+- Mobil: `mobile/` içinde React Native başlangıç projesi
 
 ## 📁 Proje Yapısı (Clean Architecture)
-
 ```
 backend/
 ├── src/
-│   ├── SmartReceipt.API/          # API Layer (Controllers, Middleware)
-│   ├── SmartReceipt.Application/  # Application Layer (CQRS, DTOs, Validators)
-│   ├── SmartReceipt.Domain/       # Domain Layer (Entities, Enums)
-│   └── SmartReceipt.Infrastructure/# Infrastructure Layer (Database, AI Services)
+│   ├── SmartReceipt.API/           # API (Controllers, Middleware)
+│   ├── SmartReceipt.Application/   # CQRS, DTO, Validators
+│   ├── SmartReceipt.Domain/        # Entities, Enums
+│   └── SmartReceipt.Infrastructure/# Db, Payments, AI, Services
 └── SmartReceipt.sln
 ```
 
 ## 🛠️ Kurulum
-
 ### Gereksinimler
-- .NET 9.0 SDK
-- PostgreSQL 14+
-- Google Gemini API Key
+- .NET 9.0 SDK, PostgreSQL 14+
+- Google Gemini API key
+- iyzico sandbox key'leri (PaymentSettings altında)
 
 ### Adımlar
-
-1. **Bağımlılıkları yükleyin:**
+1) Bağımlılıklar
 ```bash
 cd backend
 dotnet restore
 ```
-
-2. **Yapılandırma dosyasını oluşturun:**
-
+2) Konfigürasyon
 ```bash
 cd src/SmartReceipt.API
 cp appsettings.Example.json appsettings.json
 ```
+`appsettings.json` içinde doldur:
+- `ConnectionStrings:DefaultConnection`
+- `JwtSettings` (issuer/audience/key)
+- `Gemini:ApiKey`
+- `PaymentSettings:Iyzico:{ApiKey,SecretKey,BaseUrl}` (sandbox bilgileri)
 
-3. **API Key ve veritabanı bilgilerini girin:**
-
-`src/SmartReceipt.API/appsettings.json` dosyasını düzenleyin:
-- `YOUR_PASSWORD_HERE` yerine PostgreSQL şifrenizi
-- `YOUR_API_KEY_HERE` yerine Gemini API key'inizi yazın
-
-**🔑 Gemini API Key nasıl alınır?**
-https://aistudio.google.com/app/apikey
-
-**⚠️ ÖNEMLİ:** `appsettings.json` dosyasını asla GitHub'a yüklemeyin!
-
-3. **Veritabanı migration'larını çalıştırın:**
+3) Veritabanı
 ```bash
 cd src/SmartReceipt.Infrastructure
 dotnet ef database update --startup-project ../SmartReceipt.API
 ```
+Abonelik planları startup sırasında otomatik seed edilir.
 
-4. **Uygulamayı çalıştırın:**
+4) Çalıştırma
 ```bash
-cd src/SmartReceipt.API
+cd ../SmartReceipt.API
 dotnet run
 ```
+API: `https://localhost:5001` (Swagger: `/swagger`)
 
-API şu adreste çalışacak: `https://localhost:5001`
-Swagger UI: `https://localhost:5001`
+## 📡 API Endpoints (özet)
+- **Auth**: `POST /api/Auth/register`, `POST /api/Auth/login`, `POST /api/Auth/refresh-token`, `GET /api/Auth/me`, `POST /api/Auth/logout`
+- **Receipts**: `GET /api/Receipts`, `GET /api/Receipts/{id}`, `POST /api/Receipts/scan` (Gemini AI), `POST /api/Receipts` (manuel)
+- **Subscriptions**: `GET /api/Subscriptions/plans`, `GET /api/Subscriptions/current`, `GET /api/Subscriptions/usage`, `POST /api/Subscriptions/subscribe`, `POST /api/Subscriptions/cancel`
+- **Payments**: `POST /api/Payments` (iyzico token/3DS destekli), `POST /api/Payments/refund`, `GET /api/Payments/{id}`
+- **Analytics**: `GET /api/Analytics/category`, `GET /api/Analytics/trends?period=1`, `GET /api/Analytics/stores`, `GET /api/Analytics/tax`, `GET /api/Analytics/comparison`
+- **Reports**: `POST /api/Reports/pdf`, `POST /api/Reports/excel`, `POST /api/Reports/csv`
+- **Webhooks**: `POST /api/Webhooks/iyzico` (payment/subscription event işleme)
+- **Health**: `GET /health`
 
-## 📡 API Endpoints
-
-### Authentication (🔓 Public)
-
-- `POST /api/Auth/register` - Yeni kullanıcı kaydı
-- `POST /api/Auth/login` - Kullanıcı girişi (JWT token döner)
-- `POST /api/Auth/refresh-token` - Access token yenileme
-- `GET /api/Auth/me` 🔒 - Mevcut kullanıcı bilgisi
-- `POST /api/Auth/logout` 🔒 - Kullanıcı çıkışı
-
-### Receipts (🔒 Authorization Required)
-
-- `GET /api/Receipts` - Tüm fişleri listele (filtreleme ve sayfalama ile)
-- `GET /api/Receipts/{id}` - ID'ye göre fiş detayı
-- `POST /api/Receipts/scan` - Fiş görselini AI ile tara ve kaydet
-- `POST /api/Receipts` - Manuel fiş oluştur
-
-### Health Check (🔓 Public)
-- `GET /health` - Sistem sağlık kontrolü
-
-**Not:** 🔒 işaretli endpoint'ler için `Authorization: Bearer {token}` header'ı gereklidir.
+🔒 Endpoint'ler JWT ister: `Authorization: Bearer {token}`
 
 ## 🏗️ Mimari Prensipler
-
-- **Clean Architecture** - Katmanlı mimari
-- **CQRS Pattern** - Command/Query ayrımı (MediatR)
-- **Repository Pattern** - Veri erişim soyutlaması
-- **Dependency Injection** - Gevşek bağlı bileşenler
-- **Validation Pipeline** - FluentValidation ile otomatik validasyon
-- **JWT Authentication** - Token-based kimlik doğrulama
-- **Authorization** - Role-based ve claim-based yetkilendirme
+- Clean Architecture, CQRS (MediatR), DI
+- Global exception middleware + validation pipeline
+- EF Core + konfigurasyon sınıfları + seed
 
 ## 🔧 Geliştirme
-
-### Migration Oluşturma
-```bash
-cd src/SmartReceipt.Infrastructure
-dotnet ef migrations add MigrationName --startup-project ../SmartReceipt.API
-```
-
-### Build
-```bash
-dotnet build
-```
-
-### Test
-```bash
-dotnet test
-```
+- Migration: `cd src/SmartReceipt.Infrastructure && dotnet ef migrations add Name --startup-project ../SmartReceipt.API`
+- Build: `dotnet build`
+- Test: `dotnet test`
 
 ## 📦 Deployment
-
-### Docker ile Çalıştırma
+### Docker
 ```bash
 docker build -t smartreceipt-backend .
 docker run -p 5001:5001 smartreceipt-backend
 ```
+Gerekli env: `ASPNETCORE_ENVIRONMENT`, `ConnectionStrings__DefaultConnection`, `PaymentSettings__Iyzico__ApiKey`, `PaymentSettings__Iyzico__SecretKey`, `PaymentSettings__Iyzico__BaseUrl`, `Gemini__ApiKey`, `JwtSettings__Key`
+
+## 📱 Mobil
+`mobile/` klasöründe React Native başlangıç projesi ve kurulum dokümanı (`mobile/INSTALLATION_GUIDE.md`).
 
 ## 📝 Lisans
-
 MIT License
 
