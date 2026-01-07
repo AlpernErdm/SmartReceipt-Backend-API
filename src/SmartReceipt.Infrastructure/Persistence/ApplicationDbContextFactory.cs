@@ -8,7 +8,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
 {
     public ApplicationDbContext CreateDbContext(string[] args)
     {
-        var connectionString = "Host=localhost;Port=5432;Database=SmartReceiptDb_Dev;Username=postgres;Password=password";
+        var connectionString = "Host=localhost;Port=5432;Database=SmartReceiptDb_Dev;Username=postgres;Password=576100";
         
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
         optionsBuilder.UseNpgsql(connectionString, npgsqlOptions =>

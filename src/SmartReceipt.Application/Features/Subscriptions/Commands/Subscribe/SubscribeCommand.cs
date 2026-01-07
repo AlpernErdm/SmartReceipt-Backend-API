@@ -42,7 +42,7 @@ public class SubscribeCommandHandler : IRequestHandler<SubscribeCommand, Subscri
 
         if (plan == null)
         {
-            throw new Exception("Plan bulunamadı veya aktif değil");
+            throw new KeyNotFoundException("Plan bulunamadı veya aktif değil");
         }
 
         var existingSubscription = await _context.Subscriptions
@@ -52,7 +52,7 @@ public class SubscribeCommandHandler : IRequestHandler<SubscribeCommand, Subscri
 
         if (existingSubscription != null)
         {
-            throw new Exception("Zaten aktif bir aboneliğiniz bulunmaktadır");
+            throw new InvalidOperationException("Zaten aktif bir aboneliğiniz bulunmaktadır");
         }
 
         var now = DateTime.UtcNow;
@@ -93,7 +93,7 @@ public class SubscribeCommandHandler : IRequestHandler<SubscribeCommand, Subscri
 
         if (subscriptionWithPlan == null)
         {
-            throw new Exception("Abonelik oluşturuldu ancak yüklenemedi");
+            throw new InvalidOperationException("Abonelik oluşturuldu ancak yüklenemedi");
         }
 
         return new SubscriptionDto

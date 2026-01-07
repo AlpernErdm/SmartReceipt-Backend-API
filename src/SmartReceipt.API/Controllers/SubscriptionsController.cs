@@ -76,19 +76,27 @@ public class SubscriptionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<SubscriptionDto>> Subscribe([FromBody] CreateSubscriptionDto request)
     {
-        var userId = GetCurrentUserId();
-        if (userId == null)
+        try
         {
-            return Unauthorized(new { message = "Geçersiz kullanıcı" });
-        }
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "Geçersiz kullanıcı" });
+            }
 
-        var command = new SubscribeCommand(userId.Value, request.PlanId, request.BillingPeriod);
-        var result = await _mediator.Send(command);
-        
-        return CreatedAtAction(
-            nameof(GetCurrentSubscription), 
-            null, 
-            result);
+            var command = new SubscribeCommand(userId.Value, request.PlanId, request.BillingPeriod);
+            var result = await _mediator.Send(command);
+            
+            return CreatedAtAction(
+                nameof(GetCurrentSubscription), 
+                null, 
+                result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Subscription oluşturulurken hata: {Message}", ex.Message);
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("cancel")]

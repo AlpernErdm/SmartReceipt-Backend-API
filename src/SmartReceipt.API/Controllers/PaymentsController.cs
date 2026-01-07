@@ -29,35 +29,65 @@ public class PaymentsController : ControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(PaymentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaymentResult>> CreatePayment([FromBody] CreatePaymentRequestDto request)
     {
-        var userId = GetCurrentUserId();
-        if (userId == null)
+        try
         {
-            return Unauthorized();
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "Geçersiz kullanıcı" });
+            }
+
+            if (request.Amount <= 0)
+            {
+                return BadRequest(new { message = "Tutar 0'dan büyük olmalıdır" });
+            }
+
+            if (!Enum.IsDefined(typeof(PaymentProvider), request.Provider))
+            {
+                return BadRequest(new { message = "Geçersiz ödeme sağlayıcı" });
+            }
+
+            var paymentRequest = new CreatePaymentRequest
+            {
+                UserId = userId.Value,
+                SubscriptionId = request.SubscriptionId,
+                InvoiceId = request.InvoiceId,
+                Amount = request.Amount,
+                Currency = request.Currency,
+                Provider = request.Provider,
+                PaymentMethod = request.PaymentMethod,
+                Description = request.Description,
+                Metadata = request.Metadata,
+                CardToken = request.CardToken,
+                CardUserKey = request.CardUserKey,
+                CallbackUrl = request.CallbackUrl
+            };
+
+            _logger.LogInformation("Creating payment for user {UserId}, amount: {Amount}, provider: {Provider}", 
+                userId.Value, request.Amount, request.Provider);
+
+            var result = await _paymentService.CreatePaymentAsync(paymentRequest);
+
+            if (!result.IsSuccess)
+            {
+                _logger.LogWarning("Payment failed: {ErrorMessage}", result.ErrorMessage);
+                return BadRequest(new { 
+                    message = result.ErrorMessage ?? "Ödeme işlemi başarısız oldu",
+                    isSuccess = result.IsSuccess,
+                    status = result.Status
+                });
+            }
+
+            return Ok(result);
         }
-
-        var paymentRequest = new CreatePaymentRequest
+        catch (Exception ex)
         {
-            UserId = userId.Value,
-            SubscriptionId = request.SubscriptionId,
-            InvoiceId = request.InvoiceId,
-            Amount = request.Amount,
-            Currency = request.Currency,
-            Provider = request.Provider,
-            PaymentMethod = request.PaymentMethod,
-            Description = request.Description,
-            Metadata = request.Metadata
-        };
-
-        var result = await _paymentService.CreatePaymentAsync(paymentRequest);
-
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
+            _logger.LogError(ex, "Error creating payment");
+            return BadRequest(new { message = ex.Message });
         }
-
-        return Ok(result);
     }
 
     [HttpGet("{paymentId}")]
@@ -134,6 +164,10 @@ public class CreatePaymentRequestDto
     public string? PaymentMethod { get; set; }
     public string? Description { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
+    
+    public string? CardToken { get; set; }
+    public string? CardUserKey { get; set; }
+    public string? CallbackUrl { get; set; }
 }
 
 public class PaymentHistoryDto

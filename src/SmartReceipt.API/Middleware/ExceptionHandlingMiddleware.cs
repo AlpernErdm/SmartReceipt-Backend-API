@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.Extensions.Hosting;
 
 namespace SmartReceipt.API.Middleware;
 
@@ -28,9 +29,11 @@ public class ExceptionHandlingMiddleware
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
+
+        var isDevelopment = context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment();
 
         var response = exception switch
         {
@@ -62,7 +65,20 @@ public class ExceptionHandlingMiddleware
             _ => new ErrorResponse
             {
                 StatusCode = (int)HttpStatusCode.InternalServerError,
-                Message = "Beklenmeyen bir hata oluştu"
+                Message = isDevelopment ? exception.Message : "Beklenmeyen bir hata oluştu",
+                Errors = isDevelopment ? new List<ErrorDetail>
+                {
+                    new ErrorDetail
+                    {
+                        Field = "ExceptionType",
+                        Message = exception.GetType().Name
+                    },
+                    new ErrorDetail
+                    {
+                        Field = "StackTrace",
+                        Message = exception.StackTrace ?? "No stack trace"
+                    }
+                } : null
             }
         };
 

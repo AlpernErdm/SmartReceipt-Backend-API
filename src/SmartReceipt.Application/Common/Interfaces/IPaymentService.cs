@@ -26,6 +26,10 @@ public class CreatePaymentRequest
     public string? PaymentMethod { get; set; }
     public string? Description { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
+    
+    public string? CardToken { get; set; }
+    public string? CardUserKey { get; set; }
+    public string? CallbackUrl { get; set; }
 }
 
 public class PaymentResult
