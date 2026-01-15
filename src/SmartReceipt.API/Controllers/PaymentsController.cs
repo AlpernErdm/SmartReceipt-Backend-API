@@ -34,6 +34,20 @@ public class PaymentsController : ControllerBase
     {
         try
         {
+            // Check if model state is valid
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                _logger.LogWarning("Invalid model state: {Errors}", string.Join(", ", errors));
+                return BadRequest(new { message = "Geçersiz istek", errors });
+            }
+
+            _logger.LogInformation("Received payment request: SubscriptionId={SubscriptionId}, Amount={Amount}, Provider={Provider}", 
+                request.SubscriptionId, request.Amount, request.Provider);
+
             var userId = GetCurrentUserId();
             if (userId == null)
             {
@@ -158,7 +172,10 @@ public class CreatePaymentRequestDto
 {
     public Guid? SubscriptionId { get; set; }
     public Guid? InvoiceId { get; set; }
+    
+    [System.ComponentModel.DataAnnotations.Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
     public decimal Amount { get; set; }
+    
     public Currency Currency { get; set; } = Currency.TRY;
     public PaymentProvider Provider { get; set; }
     public string? PaymentMethod { get; set; }

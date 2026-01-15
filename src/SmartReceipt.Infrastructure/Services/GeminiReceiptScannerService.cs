@@ -73,7 +73,7 @@ public class GeminiReceiptScannerService : IAiReceiptScannerService
         {
             _logger.LogInformation("Gemini API'ye istek gönderiliyor...");
 
-            var apiUrl = $"https://generativelanguage.googleapis.com/v1/models/{_options.Model}:generateContent?key={_options.ApiKey}";
+            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{_options.Model}:generateContent?key={_options.ApiKey}";
 
             var fullPrompt = GetSystemPrompt() + "\n\n" + GetUserPrompt();
 
